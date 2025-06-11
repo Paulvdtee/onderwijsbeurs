@@ -303,13 +303,15 @@ async function handleHighscoreSubmit(e) {
 async function fetchHighscores() {
     try {
         // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwxC56XUShIH-RDJgYJYHPconK8pzNY6rRxhjFWXVD0An6xCeMssdjuD4mwqckBoLiXYg/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzKj5Wlew_xYk0jjfGdbgizS2dua48wpSezcCdkpsvHSXircCmaLvS0MkUgj4UlU8Sn_Q/exec';
         
         const response = await fetch(`${scriptURL}?action=getHighscores`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-            }
+                'Accept': 'application/json'
+            },
+            mode: 'cors'
         });
         
         if (!response.ok) {
