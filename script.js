@@ -20,7 +20,7 @@ const elements = {
     highscore: document.getElementById('highscore'),
     finalScore: document.getElementById('final-score'),
     grid: document.getElementById('grid'),
-    startGame: document.getElementById('start-game'),
+    startGame: document.getElementById('start-button'),
     playAgain: document.getElementById('play-again'),
     highscoreForm: document.getElementById('highscore-form')
 };
