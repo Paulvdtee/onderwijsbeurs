@@ -249,7 +249,7 @@ async function handleHighscoreSubmit(e) {
     
     try {
         // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxz_-HGy9oaSV4ilDRak3k-ZUSPTKXhsi9S2BOxQLMkdDudwMfUrbg1SPf4D06kCwhP4Q/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxOulsm8zCoB5G6O0F4msFcIysh6q1uMUWmpJPtOMzs2s_dJk_ZCm0d33hr2nEyETNg-A/exec';
         
         // Data als URL parameters
         const params = new URLSearchParams({
@@ -303,28 +303,37 @@ async function handleHighscoreSubmit(e) {
 async function fetchHighscores() {
     try {
         // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwfyrZ3AhJ1VBh1xQ6ENyA-mT7A_YfAzlaGuDkSgRov4gXFkGmWdxAbjZ62kg6TsR8KUQ/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzKj5Wlew_xYk0jjfGdbgizS2dua48wpSezcCdkpsvHSXircCmaLvS0MkUgj4UlU8Sn_Q/exec';
         
         const response = await fetch(`${scriptURL}?action=getHighscores`, {
             method: 'GET',
-            mode: 'no-cors',
             headers: {
-                'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            }
+            },
+            mode: 'cors'
         });
         
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
         
-        const data = await response.json();
-        console.log('Received highscores:', data); // Debug log
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('Error parsing JSON:', text);
+            throw new Error('Invalid JSON response');
+        }
         
-        // Cache de highscores in localStorage
-        localStorage.setItem('cachedHighscores', JSON.stringify(data));
-        
-        return data;
+        if (data.status === 'success' && data.data) {
+            console.log('Received highscores:', data.data);
+            // Cache de highscores in localStorage
+            localStorage.setItem('cachedHighscores', JSON.stringify(data.data));
+            return data.data;
+        } else {
+            throw new Error('Invalid response format');
+        }
     } catch (error) {
         console.error('Error fetching highscores:', error);
         // Fallback naar gecachte highscores
