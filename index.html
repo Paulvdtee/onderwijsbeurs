@@ -40,7 +40,7 @@
                 </div>
                 <div class="highscores-container">
                     <h3>🏆 Top 10 Highscores</h3>
-                    <div class="highscores-list" id="highscores-list">
+                    <div id="highscores-list" class="highscores-list">
                         <div class="loading">Laden...</div>
                     </div>
                 </div>
@@ -73,24 +73,23 @@
             <div class="game-over-content">
                 <h2>Game Over!</h2>
                 <p>Je score: <span id="final-score">0</span></p>
-                <p>Highscore: <span id="highscore">0</span></p>
+                
+                <form id="highscore-form" class="highscore-form" style="display: none;">
+                    <h3>NIEUWE HIGHSCORE!</h3>
+                    <div class="form-group">
+                        <label for="player-name">Voer je naam in:</label>
+                        <input type="text" id="player-name" maxlength="15" required>
+                    </div>
+                    <button type="submit" class="primary-button">Opslaan</button>
+                </form>
+
                 <div class="highscores-container">
                     <h3>🏆 Top 10 Highscores</h3>
-                    <div class="highscores-list" id="game-over-highscores">
+                    <div id="game-over-highscores" class="highscores-list">
                         <div class="loading">Laden...</div>
                     </div>
                 </div>
-                <form id="highscore-form" class="highscore-form">
-                    <div class="form-group">
-                        <label for="player-name">Naam</label>
-                        <input type="text" id="player-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="player-email">E-mail</label>
-                        <input type="email" id="player-email" required>
-                    </div>
-                    <button type="submit" class="primary-button">Verstuur Score</button>
-                </form>
+
                 <button id="play-again" class="secondary-button">Speel Opnieuw</button>
             </div>
         </div>

@@ -1,14 +1,13 @@
 // Game state
 const gameState = {
     score: 0,
-    highscore: 0,
     timeLeft: 60,
     isPlaying: false,
-    lastClickTime: 0,
     combo: 0, // Combo teller
     speed: 1, // Basis snelheid
     speedIncreaseInterval: 10, // Verhoog snelheid elke 10 seconden
-    lastSpeedIncrease: 0 // Tijd van laatste snelheidsverhoging
+    lastSpeedIncrease: 0, // Tijd van laatste snelheidsverhoging
+    highscores: [] // Array voor highscores
 };
 
 // DOM Elements
@@ -19,12 +18,13 @@ const elements = {
     gameOverScreen: document.getElementById('game-over-screen'),
     score: document.getElementById('score'),
     time: document.getElementById('time'),
-    highscore: document.getElementById('highscore'),
     finalScore: document.getElementById('final-score'),
     grid: document.getElementById('grid'),
     startGame: document.getElementById('start-button'),
     playAgain: document.getElementById('play-again'),
-    highscoreForm: document.getElementById('highscore-form')
+    highscoreForm: document.getElementById('highscore-form'),
+    highscoreList: document.getElementById('highscores-list'),
+    gameOverHighscoreList: document.getElementById('game-over-highscores')
 };
 
 // Initialize game
@@ -38,13 +38,59 @@ function initGame() {
         elements.grid.appendChild(cell);
     }
 
-    // Update highscore display
-    elements.highscore.textContent = gameState.highscore;
+    // Load highscores from localStorage
+    loadHighscores();
 
     // Event listeners
     elements.startGame.addEventListener('click', startGame);
     elements.playAgain.addEventListener('click', resetGame);
     elements.highscoreForm.addEventListener('submit', handleHighscoreSubmit);
+}
+
+// Load highscores from localStorage
+function loadHighscores() {
+    const savedHighscores = localStorage.getItem('highscores');
+    gameState.highscores = savedHighscores ? JSON.parse(savedHighscores) : [];
+    updateHighscoreDisplay();
+}
+
+// Save highscores to localStorage
+function saveHighscores() {
+    localStorage.setItem('highscores', JSON.stringify(gameState.highscores));
+}
+
+// Update highscore display
+function updateHighscoreDisplay() {
+    const displayHighscores = (container, highlightIndex = -1) => {
+        container.innerHTML = '';
+        gameState.highscores.slice(0, 10).forEach((entry, index) => {
+            const scoreElement = document.createElement('div');
+            scoreElement.className = 'highscore-entry';
+            if (index === highlightIndex) {
+                scoreElement.classList.add('highlighted');
+            }
+            scoreElement.textContent = `${index + 1}. ${entry.name.padEnd(15, ' ')} - ${entry.score}`;
+            container.appendChild(scoreElement);
+        });
+    };
+
+    displayHighscores(elements.highscoreList);
+    displayHighscores(elements.gameOverHighscoreList);
+}
+
+// Check if score is in top 10
+function isTopTenScore(score) {
+    return gameState.highscores.length < 10 || score > gameState.highscores[gameState.highscores.length - 1].score;
+}
+
+// Add new highscore
+function addHighscore(name, score) {
+    const newEntry = { name: name.substring(0, 15), score: score };
+    gameState.highscores.push(newEntry);
+    gameState.highscores.sort((a, b) => b.score - a.score);
+    gameState.highscores = gameState.highscores.slice(0, 10);
+    saveHighscores();
+    return gameState.highscores.findIndex(entry => entry === newEntry);
 }
 
 // Start game
@@ -204,17 +250,20 @@ function endGame() {
     gameState.isPlaying = false;
     clearInterval(gameState.timerInterval);
     
-    // Update highscore
-    if (gameState.score > gameState.highscore) {
-        gameState.highscore = gameState.score;
-        localStorage.setItem('highscore', gameState.highscore);
-    }
-    
     // Show game over screen
     elements.gameScreen.classList.remove('active');
     elements.gameOverScreen.classList.add('active');
     elements.finalScore.textContent = gameState.score;
-    elements.highscore.textContent = gameState.highscore;
+    
+    // Check if score is in top 10
+    if (isTopTenScore(gameState.score)) {
+        elements.highscoreForm.style.display = 'block';
+    } else {
+        elements.highscoreForm.style.display = 'none';
+    }
+    
+    // Update highscore display
+    updateHighscoreDisplay();
     
     // Reset game state
     gameState.timeLeft = 60;
@@ -228,158 +277,27 @@ function resetGame() {
 }
 
 // Handle highscore submission
-async function handleHighscoreSubmit(e) {
+function handleHighscoreSubmit(e) {
     e.preventDefault();
     
     const name = document.getElementById('player-name').value;
-    const email = document.getElementById('player-email').value;
+    const score = gameState.score;
     
-    // Disable form while submitting
-    const submitButton = e.target.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.textContent = 'Bezig met versturen...';
+    // Add new highscore
+    const newIndex = addHighscore(name, score);
     
-    try {
-        // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxyJ3QPoE-SArYlC1bM_MOuBdl-eOLT1n7n6w3-7og7GEChYmyUnhg787I2420XOfUWLQ/exec';
-        
-        // Data als URL parameters
-        const params = new URLSearchParams({
-            name: name,
-            email: email,
-            score: gameState.score,
-            highscore: gameState.highscore
-        });
-        
-        const response = await fetch(`${scriptURL}?${params.toString()}`, {
-            method: 'POST',
-            mode: 'no-cors', // Belangrijk voor CORS
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            }
-        });
-        
-        // Omdat we 'no-cors' gebruiken, kunnen we de response niet checken
-        // We gaan ervan uit dat het succesvol was als er geen error is
-        
-        // Toon succes bericht
-        const gameOverContent = document.querySelector('.game-over-content');
-        const successMessage = document.createElement('div');
-        successMessage.className = 'success-message';
-        successMessage.innerHTML = `
-            <p>Bedankt! Je score is opgeslagen.</p>
-            <p>We nemen contact met je op over onze groene opleidingen!</p>
-        `;
-        gameOverContent.insertBefore(successMessage, gameOverContent.firstChild);
-        
-        // Reset form
-        e.target.reset();
-        
-        // Reset game na 3 seconden
-        setTimeout(resetGame, 3000);
-        
-        // Update highscores na succesvolle submit
-        await updateHighscores();
-        
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Er ging iets mis bij het versturen van je score. Probeer het later opnieuw.');
-    } finally {
-        // Re-enable form
-        submitButton.disabled = false;
-        submitButton.textContent = 'Verstuur Score';
+    // Update display with highlighted new score
+    updateHighscoreDisplay();
+    const highlightElement = elements.gameOverHighscoreList.children[newIndex];
+    if (highlightElement) {
+        highlightElement.classList.add('highlighted');
     }
-}
-
-// Callback functie voor JSONP
-function handleHighscoresResponse(data) {
-    if (data.status === 'success' && data.data) {
-        console.log('Received highscores:', data.data);
-        // Cache de highscores in localStorage
-        localStorage.setItem('cachedHighscores', JSON.stringify(data.data));
-        displayHighscores(data.data, 'highscores-list');
-        displayHighscores(data.data, 'game-over-highscores');
-    }
-}
-
-// Haal highscores op met JSONP
-function fetchHighscores() {
-    return new Promise((resolve, reject) => {
-        try {
-            // Google Apps Script Web App URL
-            const scriptURL = 'https://script.google.com/macros/s/AKfycbwm2r6nS15RH_arq5Z5o_7kMBYe1RZ0AGVtQmb7JHgNo0DAfjwk_6ayW6hpbkhSgP65Zg/exec';
-            
-            // Maak een script element
-            const script = document.createElement('script');
-            script.src = `${scriptURL}?action=getHighscores&callback=handleHighscoresResponse`;
-            
-            // Voeg error handling toe
-            script.onerror = () => {
-                console.error('Error loading highscores');
-                // Fallback naar gecachte highscores
-                const cachedHighscores = localStorage.getItem('cachedHighscores');
-                if (cachedHighscores) {
-                    const data = JSON.parse(cachedHighscores);
-                    displayHighscores(data, 'highscores-list');
-                    displayHighscores(data, 'game-over-highscores');
-                }
-                reject(new Error('Failed to load highscores'));
-            };
-            
-            // Voeg het script toe aan de pagina
-            document.body.appendChild(script);
-            
-            // Verwijder het script element na gebruik
-            script.onload = () => {
-                document.body.removeChild(script);
-                resolve();
-            };
-        } catch (error) {
-            console.error('Error fetching highscores:', error);
-            // Fallback naar gecachte highscores
-            const cachedHighscores = localStorage.getItem('cachedHighscores');
-            if (cachedHighscores) {
-                const data = JSON.parse(cachedHighscores);
-                displayHighscores(data, 'highscores-list');
-                displayHighscores(data, 'game-over-highscores');
-            }
-            reject(error);
-        }
-    });
-}
-
-// Toon highscores
-function displayHighscores(highscores, containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    if (!highscores || highscores.length === 0) {
-        container.innerHTML = '<div class="loading">Nog geen highscores</div>';
-        return;
-    }
-
-    // Sorteer highscores op score (hoog naar laag)
-    highscores.sort((a, b) => b.score - a.score);
     
-    // Neem top 10
-    const top10 = highscores.slice(0, 10);
-
-    container.innerHTML = top10.map((score, index) => `
-        <div class="highscore-item">
-            <span class="highscore-rank">#${index + 1}</span>
-            <span class="highscore-name">${score.name}</span>
-            <span class="highscore-score">${score.score}</span>
-        </div>
-    `).join('');
-}
-
-// Update highscores op beide schermen
-async function updateHighscores() {
-    await fetchHighscores();
+    // Hide form
+    elements.highscoreForm.style.display = 'none';
 }
 
 // Initialize game when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initGame();
-    updateHighscores();
 }); 

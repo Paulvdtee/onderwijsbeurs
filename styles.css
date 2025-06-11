@@ -343,57 +343,76 @@ body {
 }
 
 .highscores-container {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 16px;
     margin: 20px 0;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .highscores-container h3 {
-    color: var(--primary-color);
-    margin: 0 0 15px 0;
-    font-size: 1.2em;
+    color: #4CAF50;
+    margin: 0 0 12px 0;
+    font-size: 18px;
     text-align: center;
 }
 
 .highscores-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
-.highscore-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.highscore-entry {
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    transition: transform 0.2s;
-}
-
-.highscore-item:hover {
-    transform: translateX(5px);
+    margin: 4px 0;
     background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-family: 'Inter', monospace;
+    font-size: 14px;
+    color: #333;
 }
 
-.highscore-rank {
-    font-weight: bold;
-    color: var(--primary-color);
-    width: 30px;
+.highscore-entry.highlighted {
+    background: #4CAF50;
+    color: white;
+    animation: highlight 1s ease-in-out;
 }
 
-.highscore-name {
-    flex-grow: 1;
-    margin: 0 10px;
-    color: var(--text-color);
+@keyframes highlight {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
-.highscore-score {
-    font-weight: bold;
-    color: var(--accent-color);
+.highscore-form {
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.highscore-form h3 {
+    color: #4CAF50;
+    margin: 0 0 12px 0;
+}
+
+.highscore-form .form-group {
+    margin-bottom: 12px;
+}
+
+.highscore-form input {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #4CAF50;
+    border-radius: 4px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.highscore-form input:focus {
+    outline: none;
+    border-color: #2E7D32;
 }
 
 .loading {
