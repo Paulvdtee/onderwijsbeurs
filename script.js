@@ -7,7 +7,8 @@ const MIN_ACTIVE_CELLS = 1;
 const MAX_ACTIVE_CELLS = 3;
 
 // Google Sheets configuratie
-const SHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms';
+const SHEET_ID = '11jWwuZIAYHFURWAgOHvmm151c0qFRdbTIXyFe097_bQ';
+const API_KEY = 'AIzaSyBme5mYvFXL1oM5hjBkxhJkZtc5uXg1ZPI';
 const RANGE = 'A:D';
 
 // Game state
@@ -91,7 +92,7 @@ const BANNED_NAMES = [
 // Laad highscores
 async function loadHighscores() {
     try {
-        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=AIzaSyBme5mYvFXL1oM5hjBkxhJkZtc5uXg1ZPI`);
+        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`);
         const data = await response.json();
         
         if (data.values) {
@@ -127,7 +128,7 @@ async function saveScore(name, email) {
         const timestamp = new Date().toISOString();
         const values = [[timestamp, name, email, score]];
         
-        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}:append?valueInputOption=USER_ENTERED&key=AIzaSyBme5mYvFXL1oM5hjBkxhJkZtc5uXg1ZPI`, {
+        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}:append?valueInputOption=USER_ENTERED&key=${API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
