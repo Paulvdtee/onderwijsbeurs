@@ -5,10 +5,10 @@ const gameState = {
     timeLeft: 60,
     isPlaying: false,
     lastClickTime: 0,
-    gracePeriod: 500, // 500ms grace period na laatste klik
-    isInGracePeriod: false,
+    combo: 0, // Combo teller
     speed: 1, // Basis snelheid
-    combo: 0 // Combo teller
+    speedIncreaseInterval: 10, // Verhoog snelheid elke 10 seconden
+    lastSpeedIncrease: 0 // Tijd van laatste snelheidsverhoging
 };
 
 // DOM Elements
@@ -73,8 +73,9 @@ function startGameplay() {
     gameState.isPlaying = true;
     gameState.score = 0;
     gameState.timeLeft = 60;
-    gameState.lastClickTime = 0;
-    gameState.isInGracePeriod = false;
+    gameState.combo = 0;
+    gameState.speed = 1;
+    gameState.lastSpeedIncrease = 0;
     
     updateDisplay();
     
@@ -105,10 +106,9 @@ function gameLoop() {
         activateCell(cell);
     }
     
-    // Schedule next game loop with dynamic timing based on score
+    // Schedule next game loop with speed adjustment
     const baseInterval = 1500;
-    const speedFactor = Math.max(0.5, 1 - (gameState.score / 1000)); // Gets faster as score increases
-    const nextInterval = baseInterval * speedFactor;
+    const nextInterval = baseInterval / gameState.speed;
     
     setTimeout(gameLoop, nextInterval);
 }
@@ -140,7 +140,7 @@ function activateCell(cell) {
             deactivateCell(cell);
             if (selectedColor === 'green') {
                 // Penalty for missing green cell
-                gameState.score -= 2;
+                gameState.score = Math.max(0, gameState.score - 2);
                 gameState.combo = 0;
                 updateDisplay();
             }
@@ -160,9 +160,6 @@ function handleCellClick(cell) {
     
     const color = cell.dataset.color;
     
-    // Update last click time
-    gameState.lastClickTime = Date.now();
-    
     if (color === 'green') {
         gameState.combo++;
         const multiplier = gameState.combo >= 3 ? 1.5 : 1;
@@ -170,13 +167,8 @@ function handleCellClick(cell) {
     } else if (color === 'red') {
         gameState.score = Math.max(0, gameState.score - 5);
         gameState.combo = 0;
-    } else if (color === 'blue') {
-        gameState.score += 5;
-        gameState.combo = 0;
-    } else if (color === 'yellow') {
-        gameState.score += 15;
-        gameState.combo = 0;
     }
+    // Blue and yellow cells are just distractions, no points
     
     // Deactivate cell
     deactivateCell(cell);
@@ -196,9 +188,11 @@ function updateTimer() {
         gameState.timeLeft--;
         elements.time.textContent = gameState.timeLeft;
         
-        // Check if this is the last second
-        if (gameState.timeLeft === 1) {
-            gameState.isInGracePeriod = true;
+        // Increase speed every 10 seconds
+        if (gameState.timeLeft % gameState.speedIncreaseInterval === 0 && 
+            gameState.timeLeft !== gameState.lastSpeedIncrease) {
+            gameState.speed += 0.2; // Increase speed by 20%
+            gameState.lastSpeedIncrease = gameState.timeLeft;
         }
     } else {
         endGame();
@@ -225,7 +219,6 @@ function endGame() {
     // Reset game state
     gameState.timeLeft = 60;
     gameState.score = 0;
-    gameState.isInGracePeriod = false;
 }
 
 // Reset game
