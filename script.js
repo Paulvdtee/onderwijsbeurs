@@ -1,12 +1,12 @@
 // Game state
 const gameState = {
     score: 0,
-    timeLeft: 30,
+    highscore: 0,
+    timeLeft: 60,
     isPlaying: false,
-    combo: 0,
-    speed: 1,
-    activeCells: new Set(),
-    highscore: localStorage.getItem('highscore') || 0
+    lastClickTime: 0,
+    gracePeriod: 500, // 500ms grace period na laatste klik
+    isInGracePeriod: false
 };
 
 // DOM Elements
@@ -70,10 +70,9 @@ function startGame() {
 function startGameplay() {
     gameState.isPlaying = true;
     gameState.score = 0;
-    gameState.timeLeft = 30;
-    gameState.combo = 0;
-    gameState.speed = 1;
-    gameState.activeCells.clear();
+    gameState.timeLeft = 60;
+    gameState.lastClickTime = 0;
+    gameState.isInGracePeriod = false;
     
     updateDisplay();
     
@@ -82,18 +81,7 @@ function startGameplay() {
     
     // Start timer
     const timerInterval = setInterval(() => {
-        gameState.timeLeft--;
-        updateDisplay();
-        
-        if (gameState.timeLeft <= 0) {
-            clearInterval(timerInterval);
-            endGame();
-        }
-        
-        // Increase speed every 10 seconds
-        if (gameState.timeLeft % 10 === 0) {
-            gameState.speed += 0.2;
-        }
+        updateTimer();
     }, 1000);
 }
 
@@ -104,7 +92,7 @@ function gameLoop() {
     // Activate random cells
     const numCells = Math.floor(Math.random() * 3) + 1; // 1-3 cells
     const availableCells = Array.from(elements.grid.children)
-        .filter(cell => !gameState.activeCells.has(cell));
+        .filter(cell => !cell.dataset.color);
     
     for (let i = 0; i < numCells; i++) {
         if (availableCells.length === 0) break;
@@ -138,7 +126,7 @@ function activateCell(cell) {
     }
     
     cell.classList.add('active', selectedColor);
-    gameState.activeCells.add(cell);
+    cell.dataset.color = selectedColor;
     
     // Deactivate cell after 1.5 seconds
     setTimeout(() => {
@@ -157,29 +145,30 @@ function activateCell(cell) {
 // Deactivate cell
 function deactivateCell(cell) {
     cell.classList.remove('active', 'green', 'red', 'blue', 'yellow');
-    gameState.activeCells.delete(cell);
+    cell.dataset.color = '';
 }
 
 // Handle cell click
 function handleCellClick(cell) {
     if (!cell.classList.contains('active')) return;
     
-    const color = cell.classList.contains('green') ? 'green' :
-                 cell.classList.contains('red') ? 'red' :
-                 cell.classList.contains('blue') ? 'blue' : 'yellow';
+    const color = cell.dataset.color;
     
-    deactivateCell(cell);
+    // Update last click time
+    gameState.lastClickTime = Date.now();
     
     if (color === 'green') {
-        // Correct click on green
         gameState.combo++;
         const multiplier = gameState.combo >= 3 ? 1.5 : 1;
         gameState.score += Math.floor(10 * multiplier);
     } else if (color === 'red') {
-        // Wrong click on red
-        gameState.score -= 5;
+        gameState.score = Math.max(0, gameState.score - 5);
         gameState.combo = 0;
     }
+    
+    // Reset square color
+    cell.style.backgroundColor = '';
+    cell.dataset.color = '';
     
     updateDisplay();
 }
@@ -190,9 +179,37 @@ function updateDisplay() {
     elements.time.textContent = gameState.timeLeft;
 }
 
+// Update timer
+function updateTimer() {
+    const timerElement = document.getElementById('timer');
+    const currentTime = Date.now();
+    
+    // Check if we're in grace period
+    if (gameState.isInGracePeriod) {
+        const timeSinceLastClick = currentTime - gameState.lastClickTime;
+        if (timeSinceLastClick < gameState.gracePeriod) {
+            return; // Don't end game yet if we're in grace period
+        }
+        gameState.isInGracePeriod = false;
+    }
+    
+    if (gameState.timeLeft > 0) {
+        gameState.timeLeft--;
+        timerElement.textContent = gameState.timeLeft;
+        
+        // Check if this is the last second
+        if (gameState.timeLeft === 1) {
+            gameState.isInGracePeriod = true;
+        }
+    } else {
+        endGame();
+    }
+}
+
 // End game
 function endGame() {
     gameState.isPlaying = false;
+    clearInterval(gameState.timerInterval);
     
     // Update highscore
     if (gameState.score > gameState.highscore) {
@@ -204,6 +221,12 @@ function endGame() {
     elements.gameScreen.classList.remove('active');
     elements.gameOverScreen.classList.add('active');
     elements.finalScore.textContent = gameState.score;
+    elements.highscore.textContent = gameState.highscore;
+    
+    // Reset game state
+    gameState.timeLeft = 60;
+    gameState.score = 0;
+    gameState.isInGracePeriod = false;
 }
 
 // Reset game
