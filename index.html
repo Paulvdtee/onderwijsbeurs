@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Reflex Grid - Aeres Hogeschool</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Menu Scherm -->
+    <div id="menu-screen" class="screen active">
+        <div class="container">
+            <div class="logo">
+                <h1>🌱 Aeres Hogeschool</h1>
+            </div>
+            <div class="menu-content">
+                <h2>Reflex Grid</h2>
+                <div class="game-description">
+                    <p class="intro-text">Test je reactiesnelheid in dit snelle spel!</p>
+                    <div class="rules-grid">
+                        <div class="rule-item">
+                            <span class="rule-icon">✅</span>
+                            <span class="rule-text">Klik op groene vakjes voor +10 punten</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-icon">❌</span>
+                            <span class="rule-text">Vermijd rode vakjes (-5 punten)</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-icon">⚡</span>
+                            <span class="rule-text">3 groene op rij = 1.5x bonus!</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-icon">⏱️</span>
+                            <span class="rule-text">Speel 30 seconden zo snel mogelijk</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="highscore">
+                    <h3>Highscore: <span id="highscore">0</span></h3>
+                </div>
+                <button id="start-game" class="primary-button">Start Spel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Countdown Scherm -->
+    <div id="countdown-screen" class="screen">
+        <div class="container">
+            <div id="countdown" class="countdown">3</div>
+        </div>
+    </div>
+
+    <!-- Game Scherm -->
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="timer">Tijd: <span id="time">30</span></div>
+        </div>
+        <div class="grid-container">
+            <div id="grid" class="grid"></div>
+        </div>
+    </div>
+
+    <!-- Game Over Scherm -->
+    <div id="game-over-screen" class="screen">
+        <div class="container">
+            <div class="game-over-content">
+                <h2>Game Over!</h2>
+                <p>Jouw score: <span id="final-score">0</span></p>
+                <p>Jouw reactiesnelheid is top! Net zoals onze groene opleidingen bij Aeres Hogeschool 🌱</p>
+                <form id="highscore-form" class="highscore-form">
+                    <div class="form-group">
+                        <label for="player-name">Naam</label>
+                        <input type="text" id="player-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="player-email">E-mail</label>
+                        <input type="email" id="player-email" required>
+                    </div>
+                    <button type="submit" class="primary-button">Verstuur Score</button>
+                </form>
+                <button id="play-again" class="secondary-button">Speel Opnieuw</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
