@@ -249,7 +249,7 @@ async function handleHighscoreSubmit(e) {
     
     try {
         // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyrsLB6pRKo69qVCIJW_pzVjwOGceGIVRVu0m-iXptLPs-DBCWrPcf2nE1Y4UIqhNHLYA/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwxC56XUShIH-RDJgYJYHPconK8pzNY6rRxhjFWXVD0An6xCeMssdjuD4mwqckBoLiXYg/exec';
         
         // Data als URL parameters
         const params = new URLSearchParams({
@@ -286,6 +286,9 @@ async function handleHighscoreSubmit(e) {
         // Reset game na 3 seconden
         setTimeout(resetGame, 3000);
         
+        // Update highscores na succesvolle submit
+        await updateHighscores();
+        
     } catch (error) {
         console.error('Error:', error);
         alert('Er ging iets mis bij het versturen van je score. Probeer het later opnieuw.');
@@ -296,5 +299,64 @@ async function handleHighscoreSubmit(e) {
     }
 }
 
+// Haal highscores op
+async function fetchHighscores() {
+    try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbyrsLB6pRKo69qVCIJW_pzVjwOGceGIVRVu0m-iXptLPs-DBCWrPcf2nE1Y4UIqhNHLYA/exec?action=getHighscores', {
+            method: 'GET',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        // Omdat we 'no-cors' gebruiken, kunnen we de response niet direct parsen
+        // We gebruiken een fallback met localStorage
+        const cachedHighscores = localStorage.getItem('cachedHighscores');
+        if (cachedHighscores) {
+            return JSON.parse(cachedHighscores);
+        }
+        return [];
+    } catch (error) {
+        console.error('Error fetching highscores:', error);
+        return [];
+    }
+}
+
+// Toon highscores
+function displayHighscores(highscores, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!highscores || highscores.length === 0) {
+        container.innerHTML = '<div class="loading">Nog geen highscores</div>';
+        return;
+    }
+
+    // Sorteer highscores op score (hoog naar laag)
+    highscores.sort((a, b) => b.score - a.score);
+    
+    // Neem top 10
+    const top10 = highscores.slice(0, 10);
+
+    container.innerHTML = top10.map((score, index) => `
+        <div class="highscore-item">
+            <span class="highscore-rank">#${index + 1}</span>
+            <span class="highscore-name">${score.name}</span>
+            <span class="highscore-score">${score.score}</span>
+        </div>
+    `).join('');
+}
+
+// Update highscores op beide schermen
+async function updateHighscores() {
+    const highscores = await fetchHighscores();
+    displayHighscores(highscores, 'highscores-list');
+    displayHighscores(highscores, 'game-over-highscores');
+}
+
 // Initialize game when DOM is loaded
-document.addEventListener('DOMContentLoaded', initGame); 
+document.addEventListener('DOMContentLoaded', () => {
+    initGame();
+    updateHighscores();
+}); 

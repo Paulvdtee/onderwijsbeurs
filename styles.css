@@ -340,4 +340,65 @@ body {
     .grid-container {
         max-width: 300px;
     }
+}
+
+.highscores-container {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.highscores-container h3 {
+    color: var(--primary-color);
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.highscores-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.highscore-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+
+.highscore-item:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.highscore-rank {
+    font-weight: bold;
+    color: var(--primary-color);
+    width: 30px;
+}
+
+.highscore-name {
+    flex-grow: 1;
+    margin: 0 10px;
+    color: var(--text-color);
+}
+
+.highscore-score {
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.loading {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+    padding: 10px;
 } 

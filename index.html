@@ -17,30 +17,34 @@
             <div class="menu-content">
                 <h2>Reflex Grid</h2>
                 <div class="game-description">
-                    <p class="intro-text">Test je reactiesnelheid in dit snelle spel!</p>
-                    <div class="rules-grid">
-                        <div class="rule-item">
-                            <span class="rule-icon">✅</span>
-                            <span class="rule-text">Klik op groene vakjes voor +10 punten</span>
-                        </div>
-                        <div class="rule-item">
-                            <span class="rule-icon">❌</span>
-                            <span class="rule-text">Vermijd rode vakjes (-5 punten)</span>
-                        </div>
-                        <div class="rule-item">
-                            <span class="rule-icon">⚡</span>
-                            <span class="rule-text">3 groene op rij = 1.5x bonus!</span>
-                        </div>
-                        <div class="rule-item">
-                            <span class="rule-icon">⏱️</span>
-                            <span class="rule-text">Speel 30 seconden zo snel mogelijk</span>
-                        </div>
+                    <h2>Welkom bij Reflex Grid!</h2>
+                    <p>Test je reactievermogen en help ons groener te worden!</p>
+                </div>
+                <div class="rules-grid">
+                    <div class="rule">
+                        <div class="rule-icon">🟢</div>
+                        <p>Klik op groene vlakjes voor punten</p>
+                    </div>
+                    <div class="rule">
+                        <div class="rule-icon">🔴</div>
+                        <p>Vermijd rode vlakjes</p>
+                    </div>
+                    <div class="rule">
+                        <div class="rule-icon">⏱️</div>
+                        <p>60 seconden op tijd</p>
+                    </div>
+                    <div class="rule">
+                        <div class="rule-icon">🎯</div>
+                        <p>Hoe sneller, hoe meer punten!</p>
                     </div>
                 </div>
-                <div class="highscore">
-                    <h3>Highscore: <span id="highscore">0</span></h3>
+                <div class="highscores-container">
+                    <h3>🏆 Top 10 Highscores</h3>
+                    <div class="highscores-list" id="highscores-list">
+                        <div class="loading">Laden...</div>
+                    </div>
                 </div>
-                <button id="start-game" class="primary-button">Start Spel</button>
+                <button id="start-button" class="start-button">Start Spel</button>
             </div>
         </div>
     </div>
@@ -68,8 +72,14 @@
         <div class="container">
             <div class="game-over-content">
                 <h2>Game Over!</h2>
-                <p>Jouw score: <span id="final-score">0</span></p>
-                <p>Jouw reactiesnelheid is top! Net zoals onze groene opleidingen bij Aeres Hogeschool 🌱</p>
+                <p>Je score: <span id="final-score">0</span></p>
+                <p>Highscore: <span id="highscore">0</span></p>
+                <div class="highscores-container">
+                    <h3>🏆 Top 10 Highscores</h3>
+                    <div class="highscores-list" id="game-over-highscores">
+                        <div class="loading">Laden...</div>
+                    </div>
+                </div>
                 <form id="highscore-form" class="highscore-form">
                     <div class="form-group">
                         <label for="player-name">Naam</label>
