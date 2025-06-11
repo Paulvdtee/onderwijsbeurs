@@ -7,7 +7,9 @@ const gameState = {
     speed: 1, // Basis snelheid
     speedIncreaseInterval: 10, // Verhoog snelheid elke 10 seconden
     lastSpeedIncrease: 0, // Tijd van laatste snelheidsverhoging
-    highscores: [] // Array voor highscores
+    highscores: [], // Array voor highscores
+    gameLoopInterval: null, // Interval voor game loop
+    timerInterval: null // Interval voor timer
 };
 
 // DOM Elements
@@ -126,22 +128,25 @@ function startGameplay() {
     updateDisplay();
     
     // Start game loop
-    gameLoop();
+    const baseInterval = 1500;
+    gameState.gameLoopInterval = setInterval(gameLoop, baseInterval);
     
     // Start timer
-    const timerInterval = setInterval(() => {
-        updateTimer();
-    }, 1000);
+    gameState.timerInterval = setInterval(updateTimer, 1000);
 }
 
 // Game loop
 function gameLoop() {
     if (!gameState.isPlaying) return;
     
+    // Deactivate all cells first
+    Array.from(elements.grid.children).forEach(cell => {
+        deactivateCell(cell);
+    });
+    
     // Activate random cells
     const numCells = Math.floor(Math.random() * 3) + 1; // 1-3 cells
-    const availableCells = Array.from(elements.grid.children)
-        .filter(cell => !cell.dataset.color);
+    const availableCells = Array.from(elements.grid.children);
     
     for (let i = 0; i < numCells; i++) {
         if (availableCells.length === 0) break;
@@ -151,12 +156,6 @@ function gameLoop() {
         
         activateCell(cell);
     }
-    
-    // Schedule next game loop with speed adjustment
-    const baseInterval = 1500;
-    const nextInterval = baseInterval / gameState.speed;
-    
-    setTimeout(gameLoop, nextInterval);
 }
 
 // Activate cell
@@ -179,19 +178,6 @@ function activateCell(cell) {
     
     cell.classList.add('active', selectedColor);
     cell.dataset.color = selectedColor;
-    
-    // Deactivate cell after 1.5 seconds
-    setTimeout(() => {
-        if (cell.classList.contains('active')) {
-            deactivateCell(cell);
-            if (selectedColor === 'green') {
-                // Penalty for missing green cell
-                gameState.score = Math.max(0, gameState.score - 2);
-                gameState.combo = 0;
-                updateDisplay();
-            }
-        }
-    }, 1500);
 }
 
 // Deactivate cell
@@ -202,7 +188,7 @@ function deactivateCell(cell) {
 
 // Handle cell click
 function handleCellClick(cell) {
-    if (!cell.classList.contains('active')) return;
+    if (!gameState.isPlaying || !cell.classList.contains('active')) return;
     
     const color = cell.dataset.color;
     
@@ -239,6 +225,11 @@ function updateTimer() {
             gameState.timeLeft !== gameState.lastSpeedIncrease) {
             gameState.speed += 0.2; // Increase speed by 20%
             gameState.lastSpeedIncrease = gameState.timeLeft;
+            
+            // Update game loop interval based on new speed
+            clearInterval(gameState.gameLoopInterval);
+            const baseInterval = 1500;
+            gameState.gameLoopInterval = setInterval(gameLoop, baseInterval / gameState.speed);
         }
     } else {
         endGame();
@@ -248,7 +239,15 @@ function updateTimer() {
 // End game
 function endGame() {
     gameState.isPlaying = false;
+    
+    // Clear all intervals
     clearInterval(gameState.timerInterval);
+    clearInterval(gameState.gameLoopInterval);
+    
+    // Deactivate all cells
+    Array.from(elements.grid.children).forEach(cell => {
+        deactivateCell(cell);
+    });
     
     // Show game over screen
     elements.gameScreen.classList.remove('active');
