@@ -249,7 +249,7 @@ async function handleHighscoreSubmit(e) {
     
     try {
         // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxOulsm8zCoB5G6O0F4msFcIysh6q1uMUWmpJPtOMzs2s_dJk_ZCm0d33hr2nEyETNg-A/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwm2r6nS15RH_arq5Z5o_7kMBYe1RZ0AGVtQmb7JHgNo0DAfjwk_6ayW6hpbkhSgP65Zg/exec';
         
         // Data als URL parameters
         const params = new URLSearchParams({
@@ -307,9 +307,6 @@ async function fetchHighscores() {
         
         const response = await fetch(`${scriptURL}?action=getHighscores`, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            },
             mode: 'cors'
         });
         
