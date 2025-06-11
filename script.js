@@ -8,7 +8,7 @@ const MAX_ACTIVE_CELLS = 3;
 
 // Google Sheets configuratie
 const SHEET_ID = '11jWwuZIAYHFURWAgOHvmm151c0qFRdbTIXyFe097_bQ';
-const API_KEY = 'AIzaSyBme5mYvFXL1oM5hjBkxhJkZtc5uXg1ZPI';
+const API_KEY = 'AIzaSyAa_hKJ8diYRtjSPaNM2t9-Qd4yGnHV7Gg';
 const RANGE = 'A:D';
 
 // Game state
