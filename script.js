@@ -1,302 +1,294 @@
+// Game configuratie
+const GRID_SIZE = 4;
+const GAME_DURATION = 60;
+const CELL_ACTIVE_TIME = 1500;
+const SPEED_INCREASE_INTERVAL = 10000;
+const MIN_ACTIVE_CELLS = 1;
+const MAX_ACTIVE_CELLS = 3;
+
 // Game state
-const gameState = {
-    score: 0,
-    timeLeft: 60,
-    isPlaying: false,
-    combo: 0, // Combo teller
-    speed: 1, // Basis snelheid
-    speedIncreaseInterval: 10, // Verhoog snelheid elke 10 seconden
-    lastSpeedIncrease: 0, // Tijd van laatste snelheidsverhoging
-    highscores: [], // Array voor highscores
-    gameLoopInterval: null, // Interval voor game loop
-    timerInterval: null // Interval voor timer
-};
+let score = 0;
+let timeLeft = GAME_DURATION;
+let gameInterval;
+let timerInterval;
+let activeCells = [];
+let comboCount = 0;
+let gameSpeed = 1;
 
-// DOM Elements
-const elements = {
-    menuScreen: document.getElementById('menu-screen'),
-    countdownScreen: document.getElementById('countdown-screen'),
-    gameScreen: document.getElementById('game-screen'),
-    gameOverScreen: document.getElementById('game-over-screen'),
-    score: document.getElementById('score'),
-    time: document.getElementById('time'),
-    finalScore: document.getElementById('final-score'),
-    grid: document.getElementById('grid'),
-    startGame: document.getElementById('start-button'),
-    playAgain: document.getElementById('play-again'),
-    highscoreForm: document.getElementById('highscore-form'),
-    highscoreList: document.getElementById('highscores-list'),
-    gameOverHighscoreList: document.getElementById('game-over-highscores')
-};
+// DOM elementen
+const menuScreen = document.getElementById('menu-screen');
+const gameScreen = document.getElementById('game-screen');
+const gameOverScreen = document.getElementById('game-over-screen');
+const grid = document.getElementById('grid');
+const scoreDisplay = document.querySelector('#score span');
+const timerDisplay = document.querySelector('#timer span');
+const finalScoreDisplay = document.querySelector('#final-score span');
+const startButton = document.getElementById('start-game');
+const playAgainButton = document.getElementById('play-again');
+const scoreForm = document.getElementById('score-form');
 
-// Initialize game
-function initGame() {
-    // Create grid cells
-    for (let i = 0; i < 16; i++) {
+// Banned woorden lijst
+const BANNED_NAMES = [
+    // Nederlandse scheldwoorden
+    'kut', 'k0t', 'kut3', 'k_ut', 'kutt',
+    'lul', 'l0l', 'lul3', 'l_ul', 'lull',
+    'pik', 'p1k', 'pik3', 'p_ik', 'pikk',
+    'kloot', 'klote', 'kl0te', 'kl_te',
+    'hoer', 'h0er', 'ho3r', 'h_er', 'hoor',
+    'teef', 'te3f', 't33f', 't_ef', 'teeff',
+    'kanker', 'k4nker', 'kanc3r', 'k_nker', 'kankr',
+    'tyfus', 'tyf0s', 'tyf_s', 't1fus',
+    'tering', 'ter1ng', 't3ring', 't_ring',
+    'godver', 'g0dver', 'godv3r', 'g_dver',
+    
+    // Engelse scheldwoorden
+    'fuck', 'fuk', 'f0ck', 'f_ck', 'phuck',
+    'shit', 'sh1t', 'sh_t', 'sht', 'sh17',
+    'bitch', 'b1tch', 'b_tch', 'bytch',
+    'damn', 'd4mn', 'd_mn', 'dam',
+    'hell', 'h3ll', 'h_ll', 'hel',
+    'crap', 'cr4p', 'cr_p', 'krap',
+    'piss', 'p1ss', 'p_ss', 'pis',
+    'ass', '4ss', '_ss', 'ars',
+    'gay', 'g4y', 'g_y', 'gai',
+    'homo', 'h0mo', 'h_mo', 'hom0',
+    'retard', 'ret4rd', 'ret_rd', 'rtard',
+    'spast', 'sp4st', 'sp_st', 'spastic',
+    
+    // Ziektes/medisch misbruik
+    'aids', '4ids', '_ids', 'aides',
+    'hiv', 'h1v', 'h_v',
+    'corona', 'c0rona', 'cor0na', 'c_rona',
+    'covid', 'c0vid', 'cov1d', 'c_vid',
+    'autisme', '4utisme', '_utisme', 'autism',
+    'downie', 'd0wnie', 'd_wnie', 'down',
+    'mongool', 'm0ngool', 'm_ngool', 'mongo',
+    
+    // Racistische termen
+    'neger', 'n3ger', 'n_ger', 'negr',
+    'nikker', 'n1kker', 'n_kker', 'nikr',
+    'allochtoon', '4llochtoon', '_llochtoon',
+    
+    // Leet speak patronen
+    'b00bs', 'b0obs', 'b_obs',
+    'd1ck', 'd_ck', 'dik',
+    'c0ck', 'c_ck', 'kok',
+    'p0rn', 'p_rn', 'pr0n',
+    's3x', 's_x', 'seks',
+    
+    // Website/spam woorden
+    'www', 'http', 'https', '.com', '.nl',
+    'spam', 'sp4m', 'sp_m',
+    'bot', 'b0t', 'b_t',
+    'hack', 'h4ck', 'h_ck', 'hax',
+];
+
+// Initialiseer het grid
+function initGrid() {
+    grid.innerHTML = '';
+    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
         const cell = document.createElement('div');
         cell.className = 'grid-cell';
         cell.dataset.index = i;
-        cell.addEventListener('click', () => handleCellClick(cell));
-        elements.grid.appendChild(cell);
+        cell.addEventListener('click', handleCellClick);
+        grid.appendChild(cell);
     }
-
-    // Load highscores from localStorage
-    loadHighscores();
-
-    // Event listeners
-    elements.startGame.addEventListener('click', startGame);
-    elements.playAgain.addEventListener('click', resetGame);
-    elements.highscoreForm.addEventListener('submit', handleHighscoreSubmit);
 }
 
-// Load highscores from localStorage
-function loadHighscores() {
-    const savedHighscores = localStorage.getItem('highscores');
-    gameState.highscores = savedHighscores ? JSON.parse(savedHighscores) : [];
-    updateHighscoreDisplay();
-}
-
-// Save highscores to localStorage
-function saveHighscores() {
-    localStorage.setItem('highscores', JSON.stringify(gameState.highscores));
-}
-
-// Update highscore display
-function updateHighscoreDisplay() {
-    const displayHighscores = (container, highlightIndex = -1) => {
-        container.innerHTML = '';
-        gameState.highscores.slice(0, 10).forEach((entry, index) => {
-            const scoreElement = document.createElement('div');
-            scoreElement.className = 'highscore-entry';
-            if (index === highlightIndex) {
-                scoreElement.classList.add('highlighted');
-            }
-            scoreElement.textContent = `${index + 1}. ${entry.name.padEnd(15, ' ')} - ${entry.score}`;
-            container.appendChild(scoreElement);
-        });
-    };
-
-    displayHighscores(elements.highscoreList);
-    displayHighscores(elements.gameOverHighscoreList);
-}
-
-// Check if score is in top 10
-function isTopTenScore(score) {
-    return gameState.highscores.length < 10 || score > gameState.highscores[gameState.highscores.length - 1].score;
-}
-
-// Add new highscore
-function addHighscore(name, score) {
-    const newEntry = { name: name.substring(0, 15), score: score };
-    gameState.highscores.push(newEntry);
-    gameState.highscores.sort((a, b) => b.score - a.score);
-    gameState.highscores = gameState.highscores.slice(0, 10);
-    saveHighscores();
-    return gameState.highscores.findIndex(entry => entry === newEntry);
-}
-
-// Start game
+// Start het spel
 function startGame() {
-    elements.menuScreen.classList.remove('active');
-    elements.countdownScreen.classList.add('active');
+    score = 0;
+    timeLeft = GAME_DURATION;
+    gameSpeed = 1;
+    comboCount = 0;
+    activeCells = [];
     
-    let count = 3;
-    const countdownElement = document.getElementById('countdown');
+    updateScore();
+    updateTimer();
     
-    const countdownInterval = setInterval(() => {
-        count--;
-        if (count > 0) {
-            countdownElement.textContent = count;
-        } else {
-            clearInterval(countdownInterval);
-            elements.countdownScreen.classList.remove('active');
-            elements.gameScreen.classList.add('active');
-            startGameplay();
-        }
-    }, 1000);
-}
-
-// Start gameplay
-function startGameplay() {
-    gameState.isPlaying = true;
-    gameState.score = 0;
-    gameState.timeLeft = 60;
-    gameState.combo = 0;
-    gameState.speed = 1;
-    gameState.lastSpeedIncrease = 0;
+    menuScreen.classList.remove('active');
+    gameScreen.classList.add('active');
+    gameOverScreen.classList.remove('active');
     
-    updateDisplay();
+    gameInterval = setInterval(gameLoop, 1000 / gameSpeed);
+    timerInterval = setInterval(updateGameTimer, 1000);
     
-    // Start game loop
-    const baseInterval = 1500;
-    gameState.gameLoopInterval = setInterval(gameLoop, baseInterval);
-    
-    // Start timer
-    gameState.timerInterval = setInterval(updateTimer, 1000);
+    // Verhoog de snelheid elke 10 seconden
+    setInterval(() => {
+        gameSpeed += 0.2;
+    }, SPEED_INCREASE_INTERVAL);
 }
 
 // Game loop
 function gameLoop() {
-    if (!gameState.isPlaying) return;
-    
-    // Deactivate all cells first
-    Array.from(elements.grid.children).forEach(cell => {
-        deactivateCell(cell);
+    // Verwijder oude actieve cellen
+    activeCells.forEach(cell => {
+        if (cell.timeout) {
+            clearTimeout(cell.timeout);
+        }
+        cell.element.classList.remove('active', 'green', 'red', 'blue', 'yellow');
     });
     
-    // Activate random cells
-    const numCells = Math.floor(Math.random() * 3) + 1; // 1-3 cells
-    const availableCells = Array.from(elements.grid.children);
+    // Genereer nieuwe actieve cellen
+    const numActiveCells = Math.floor(Math.random() * (MAX_ACTIVE_CELLS - MIN_ACTIVE_CELLS + 1)) + MIN_ACTIVE_CELLS;
+    activeCells = [];
     
-    for (let i = 0; i < numCells; i++) {
-        if (availableCells.length === 0) break;
+    for (let i = 0; i < numActiveCells; i++) {
+        const cellIndex = Math.floor(Math.random() * (GRID_SIZE * GRID_SIZE));
+        const cell = grid.children[cellIndex];
         
-        const randomIndex = Math.floor(Math.random() * availableCells.length);
-        const cell = availableCells.splice(randomIndex, 1)[0];
+        // Kies een willekeurige kleur
+        const colors = ['green', 'red', 'blue', 'yellow'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
         
-        activateCell(cell);
+        cell.classList.add('active', color);
+        
+        const timeout = setTimeout(() => {
+            cell.classList.remove('active', color);
+            if (color === 'green') {
+                // Straf voor gemiste groene cellen
+                updateScore(-2);
+                comboCount = 0;
+            }
+        }, CELL_ACTIVE_TIME);
+        
+        activeCells.push({ element: cell, timeout });
     }
 }
 
-// Activate cell
-function activateCell(cell) {
-    const colors = ['green', 'red', 'blue', 'yellow'];
-    const weights = [0.4, 0.3, 0.15, 0.15]; // 40% green, 30% red, 15% blue, 15% yellow
+// Verwerk cell clicks
+function handleCellClick(event) {
+    const cell = event.target;
+    if (!cell.classList.contains('active')) return;
     
-    // Weighted random color selection
-    const random = Math.random();
-    let sum = 0;
-    let selectedColor;
-    
-    for (let i = 0; i < weights.length; i++) {
-        sum += weights[i];
-        if (random < sum) {
-            selectedColor = colors[i];
-            break;
+    if (cell.classList.contains('green')) {
+        // Correcte klik op groene cel
+        let points = 10;
+        comboCount++;
+        
+        if (comboCount >= 3) {
+            points *= 1.5; // Combo multiplier
         }
-    }
-    
-    cell.classList.add('active', selectedColor);
-    cell.dataset.color = selectedColor;
-}
-
-// Deactivate cell
-function deactivateCell(cell) {
-    cell.classList.remove('active', 'green', 'red', 'blue', 'yellow');
-    cell.dataset.color = '';
-}
-
-// Handle cell click
-function handleCellClick(cell) {
-    if (!gameState.isPlaying || !cell.classList.contains('active')) return;
-    
-    const color = cell.dataset.color;
-    
-    if (color === 'green') {
-        gameState.combo++;
-        const multiplier = gameState.combo >= 3 ? 1.5 : 1;
-        gameState.score += Math.floor(10 * multiplier);
-    } else if (color === 'red') {
-        gameState.score = Math.max(0, gameState.score - 5);
-        gameState.combo = 0;
-    }
-    // Blue and yellow cells are just distractions, no points
-    
-    // Deactivate cell
-    deactivateCell(cell);
-    
-    updateDisplay();
-}
-
-// Update display
-function updateDisplay() {
-    elements.score.textContent = gameState.score;
-    elements.time.textContent = gameState.timeLeft;
-}
-
-// Update timer
-function updateTimer() {
-    if (gameState.timeLeft > 0) {
-        gameState.timeLeft--;
-        elements.time.textContent = gameState.timeLeft;
         
-        // Increase speed every 10 seconds
-        if (gameState.timeLeft % gameState.speedIncreaseInterval === 0 && 
-            gameState.timeLeft !== gameState.lastSpeedIncrease) {
-            gameState.speed += 0.2; // Increase speed by 20%
-            gameState.lastSpeedIncrease = gameState.timeLeft;
-            
-            // Update game loop interval based on new speed
-            clearInterval(gameState.gameLoopInterval);
-            const baseInterval = 1500;
-            gameState.gameLoopInterval = setInterval(gameLoop, baseInterval / gameState.speed);
-        }
+        updateScore(points);
+    } else if (cell.classList.contains('red')) {
+        // Straf voor klikken op rode cel
+        updateScore(-5);
+        comboCount = 0;
     } else {
+        // Neutrale klik op blauwe/gele cel
+        comboCount = 0;
+    }
+    
+    // Verwijder de cel
+    cell.classList.remove('active', 'green', 'red', 'blue', 'yellow');
+    const cellIndex = activeCells.findIndex(c => c.element === cell);
+    if (cellIndex !== -1) {
+        clearTimeout(activeCells[cellIndex].timeout);
+        activeCells.splice(cellIndex, 1);
+    }
+}
+
+// Update de score
+function updateScore(points = 0) {
+    score += points;
+    scoreDisplay.textContent = score;
+}
+
+// Update de timer
+function updateGameTimer() {
+    timeLeft--;
+    updateTimer();
+    
+    if (timeLeft <= 0) {
         endGame();
     }
 }
 
-// End game
+function updateTimer() {
+    timerDisplay.textContent = timeLeft;
+}
+
+// Eindig het spel
 function endGame() {
-    gameState.isPlaying = false;
+    clearInterval(gameInterval);
+    clearInterval(timerInterval);
     
-    // Clear all intervals
-    clearInterval(gameState.timerInterval);
-    clearInterval(gameState.gameLoopInterval);
+    gameScreen.classList.remove('active');
+    gameOverScreen.classList.add('active');
+    finalScoreDisplay.textContent = score;
+}
+
+// Valideer de naam
+function isNameAllowed(name) {
+    const cleanName = name.toLowerCase()
+        .replace(/[0-9]/g, (match) => {
+            const leetMap = {'0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't'};
+            return leetMap[match] || match;
+        })
+        .replace(/[^a-z]/g, '');
     
-    // Deactivate all cells
-    Array.from(elements.grid.children).forEach(cell => {
-        deactivateCell(cell);
-    });
-    
-    // Show game over screen
-    elements.gameScreen.classList.remove('active');
-    elements.gameOverScreen.classList.add('active');
-    elements.finalScore.textContent = gameState.score;
-    
-    // Check if score is in top 10
-    if (isTopTenScore(gameState.score)) {
-        elements.highscoreForm.style.display = 'block';
-    } else {
-        elements.highscoreForm.style.display = 'none';
+    if (BANNED_NAMES.includes(cleanName)) {
+        return false;
     }
     
-    // Update highscore display
-    updateHighscoreDisplay();
+    for (let banned of BANNED_NAMES) {
+        if (cleanName.includes(banned)) {
+            return false;
+        }
+    }
     
-    // Reset game state
-    gameState.timeLeft = 60;
-    gameState.score = 0;
+    if (/(.)\1{3,}/.test(cleanName)) {
+        return false;
+    }
+    
+    return true;
 }
 
-// Reset game
-function resetGame() {
-    elements.gameOverScreen.classList.remove('active');
-    elements.menuScreen.classList.add('active');
+// Valideer het formulier
+function validateForm() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    
+    if (name.length < 2) {
+        alert('Voornaam moet minimaal 2 letters zijn');
+        return false;
+    }
+    
+    if (name.length > 15) {
+        alert('Voornaam mag maximaal 15 letters zijn');
+        return false;
+    }
+    
+    if (!/^[a-zA-ZÀ-ÿ\s-']+$/.test(name)) {
+        alert('Voornaam mag alleen letters bevatten');
+        return false;
+    }
+    
+    if (!isNameAllowed(name)) {
+        alert('Deze naam is niet toegestaan. Kies een andere voornaam.');
+        return false;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Voer een geldig e-mailadres in');
+        return false;
+    }
+    
+    return true;
 }
 
-// Handle highscore submission
-function handleHighscoreSubmit(e) {
+// Event listeners
+startButton.addEventListener('click', startGame);
+playAgainButton.addEventListener('click', startGame);
+scoreForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    
-    const name = document.getElementById('player-name').value;
-    const score = gameState.score;
-    
-    // Add new highscore
-    const newIndex = addHighscore(name, score);
-    
-    // Update display with highlighted new score
-    updateHighscoreDisplay();
-    const highlightElement = elements.gameOverHighscoreList.children[newIndex];
-    if (highlightElement) {
-        highlightElement.classList.add('highlighted');
+    if (validateForm()) {
+        // Hier zou de Google Sheets API integratie komen
+        alert('Score opgeslagen!');
+        startGame();
     }
-    
-    // Hide form
-    elements.highscoreForm.style.display = 'none';
-}
+});
 
-// Initialize game when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initGame();
-}); 
+// Initialiseer het spel
+initGrid();

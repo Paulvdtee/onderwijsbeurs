@@ -2,99 +2,54 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Reflex Grid - Aeres Hogeschool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aeres Game</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Menu Scherm -->
-    <div id="menu-screen" class="screen active">
-        <div class="container">
-            <div class="logo">
-                <h1>🌱 Aeres Hogeschool</h1>
+    <div id="game-container">
+        <!-- Menu Screen -->
+        <div id="menu-screen" class="screen active">
+            <h1>Aeres Hogeschool 🌱</h1>
+            <div class="highscores">
+                <h2>TOP 10 HIGHSCORES</h2>
+                <div id="highscores-list">
+                    <!-- Highscores worden hier dynamisch ingeladen -->
+                </div>
             </div>
-            <div class="menu-content">
-                <h2>Reflex Grid</h2>
-                <div class="game-description">
-                    <h2>Welkom bij Reflex Grid!</h2>
-                    <p>Test je reactievermogen en help ons groener te worden!</p>
-                </div>
-                <div class="rules-grid">
-                    <div class="rule">
-                        <div class="rule-icon">🟢</div>
-                        <p>Klik op groene vlakjes voor punten</p>
-                    </div>
-                    <div class="rule">
-                        <div class="rule-icon">🔴</div>
-                        <p>Vermijd rode vlakjes</p>
-                    </div>
-                    <div class="rule">
-                        <div class="rule-icon">⏱️</div>
-                        <p>60 seconden op tijd</p>
-                    </div>
-                    <div class="rule">
-                        <div class="rule-icon">🎯</div>
-                        <p>Hoe sneller, hoe meer punten!</p>
-                    </div>
-                </div>
-                <div class="highscores-container">
-                    <h3>🏆 Top 10 Highscores</h3>
-                    <div id="highscores-list" class="highscores-list">
-                        <div class="loading">Laden...</div>
-                    </div>
-                </div>
-                <button id="start-button" class="start-button">Start Spel</button>
+            <button id="start-game" class="primary-button">SPEEL NU!</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div id="score">SCORE: <span>0</span></div>
+                <div id="timer">TIJD: <span>60</span></div>
+            </div>
+            <div id="grid">
+                <!-- Grid wordt dynamisch gegenereerd -->
             </div>
         </div>
-    </div>
 
-    <!-- Countdown Scherm -->
-    <div id="countdown-screen" class="screen">
-        <div class="container">
-            <div id="countdown" class="countdown">3</div>
-        </div>
-    </div>
-
-    <!-- Game Scherm -->
-    <div id="game-screen" class="screen">
-        <div class="game-header">
-            <div class="score">Score: <span id="score">0</span></div>
-            <div class="timer">Tijd: <span id="time">60</span></div>
-        </div>
-        <div class="grid-container">
-            <div id="grid" class="grid"></div>
-        </div>
-    </div>
-
-    <!-- Game Over Scherm -->
-    <div id="game-over-screen" class="screen">
-        <div class="container">
-            <div class="game-over-content">
-                <h2>Game Over!</h2>
-                <p>Je score: <span id="final-score">0</span></p>
-                
-                <form id="highscore-form" class="highscore-form" style="display: none;">
-                    <h3>NIEUWE HIGHSCORE!</h3>
-                    <div class="form-group">
-                        <label for="player-name">Voer je naam in:</label>
-                        <input type="text" id="player-name" maxlength="15" required>
-                    </div>
-                    <button type="submit" class="primary-button">Opslaan</button>
-                </form>
-
-                <div class="highscores-container">
-                    <h3>🏆 Top 10 Highscores</h3>
-                    <div id="game-over-highscores" class="highscores-list">
-                        <div class="loading">Laden...</div>
-                    </div>
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen">
+            <h2>GAME OVER!</h2>
+            <div id="final-score">Jouw Score: <span>0</span></div>
+            <form id="score-form">
+                <div class="form-group">
+                    <label for="name">Voornaam:</label>
+                    <input type="text" id="name" maxlength="15" required>
                 </div>
-
-                <button id="play-again" class="secondary-button">Speel Opnieuw</button>
-            </div>
+                <div class="form-group">
+                    <label for="email">E-mailadres:</label>
+                    <input type="email" id="email" required>
+                </div>
+                <button type="submit" class="primary-button">OPSLAAN</button>
+            </form>
+            <button id="play-again" class="secondary-button">SPEEL OPNIEUW</button>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
-</html> 
+</html>
