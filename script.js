@@ -6,7 +6,9 @@ const gameState = {
     isPlaying: false,
     lastClickTime: 0,
     gracePeriod: 500, // 500ms grace period na laatste klik
-    isInGracePeriod: false
+    isInGracePeriod: false,
+    speed: 1, // Basis snelheid
+    combo: 0 // Combo teller
 };
 
 // DOM Elements
@@ -104,7 +106,7 @@ function gameLoop() {
     }
     
     // Schedule next game loop
-    setTimeout(gameLoop, 1500 / gameState.speed);
+    setTimeout(gameLoop, 1500);
 }
 
 // Activate cell
@@ -164,11 +166,16 @@ function handleCellClick(cell) {
     } else if (color === 'red') {
         gameState.score = Math.max(0, gameState.score - 5);
         gameState.combo = 0;
+    } else if (color === 'blue') {
+        gameState.score += 5;
+        gameState.combo = 0;
+    } else if (color === 'yellow') {
+        gameState.score += 15;
+        gameState.combo = 0;
     }
     
-    // Reset square color
-    cell.style.backgroundColor = '';
-    cell.dataset.color = '';
+    // Deactivate cell
+    deactivateCell(cell);
     
     updateDisplay();
 }
