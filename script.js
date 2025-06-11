@@ -249,7 +249,7 @@ async function handleHighscoreSubmit(e) {
     
     try {
         // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwm2r6nS15RH_arq5Z5o_7kMBYe1RZ0AGVtQmb7JHgNo0DAfjwk_6ayW6hpbkhSgP65Zg/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxyJ3QPoE-SArYlC1bM_MOuBdl-eOLT1n7n6w3-7og7GEChYmyUnhg787I2420XOfUWLQ/exec';
         
         // Data als URL parameters
         const params = new URLSearchParams({
@@ -299,47 +299,61 @@ async function handleHighscoreSubmit(e) {
     }
 }
 
-// Haal highscores op
-async function fetchHighscores() {
-    try {
-        // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzKj5Wlew_xYk0jjfGdbgizS2dua48wpSezcCdkpsvHSXircCmaLvS0MkUgj4UlU8Sn_Q/exec';
-        
-        const response = await fetch(`${scriptURL}?action=getHighscores`, {
-            method: 'GET',
-            mode: 'cors'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        
-        const text = await response.text();
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            console.error('Error parsing JSON:', text);
-            throw new Error('Invalid JSON response');
-        }
-        
-        if (data.status === 'success' && data.data) {
-            console.log('Received highscores:', data.data);
-            // Cache de highscores in localStorage
-            localStorage.setItem('cachedHighscores', JSON.stringify(data.data));
-            return data.data;
-        } else {
-            throw new Error('Invalid response format');
-        }
-    } catch (error) {
-        console.error('Error fetching highscores:', error);
-        // Fallback naar gecachte highscores
-        const cachedHighscores = localStorage.getItem('cachedHighscores');
-        if (cachedHighscores) {
-            return JSON.parse(cachedHighscores);
-        }
-        return [];
+// Callback functie voor JSONP
+function handleHighscoresResponse(data) {
+    if (data.status === 'success' && data.data) {
+        console.log('Received highscores:', data.data);
+        // Cache de highscores in localStorage
+        localStorage.setItem('cachedHighscores', JSON.stringify(data.data));
+        displayHighscores(data.data, 'highscores-list');
+        displayHighscores(data.data, 'game-over-highscores');
     }
+}
+
+// Haal highscores op met JSONP
+function fetchHighscores() {
+    return new Promise((resolve, reject) => {
+        try {
+            // Google Apps Script Web App URL
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbwm2r6nS15RH_arq5Z5o_7kMBYe1RZ0AGVtQmb7JHgNo0DAfjwk_6ayW6hpbkhSgP65Zg/exec';
+            
+            // Maak een script element
+            const script = document.createElement('script');
+            script.src = `${scriptURL}?action=getHighscores&callback=handleHighscoresResponse`;
+            
+            // Voeg error handling toe
+            script.onerror = () => {
+                console.error('Error loading highscores');
+                // Fallback naar gecachte highscores
+                const cachedHighscores = localStorage.getItem('cachedHighscores');
+                if (cachedHighscores) {
+                    const data = JSON.parse(cachedHighscores);
+                    displayHighscores(data, 'highscores-list');
+                    displayHighscores(data, 'game-over-highscores');
+                }
+                reject(new Error('Failed to load highscores'));
+            };
+            
+            // Voeg het script toe aan de pagina
+            document.body.appendChild(script);
+            
+            // Verwijder het script element na gebruik
+            script.onload = () => {
+                document.body.removeChild(script);
+                resolve();
+            };
+        } catch (error) {
+            console.error('Error fetching highscores:', error);
+            // Fallback naar gecachte highscores
+            const cachedHighscores = localStorage.getItem('cachedHighscores');
+            if (cachedHighscores) {
+                const data = JSON.parse(cachedHighscores);
+                displayHighscores(data, 'highscores-list');
+                displayHighscores(data, 'game-over-highscores');
+            }
+            reject(error);
+        }
+    });
 }
 
 // Toon highscores
@@ -369,9 +383,7 @@ function displayHighscores(highscores, containerId) {
 
 // Update highscores op beide schermen
 async function updateHighscores() {
-    const highscores = await fetchHighscores();
-    displayHighscores(highscores, 'highscores-list');
-    displayHighscores(highscores, 'game-over-highscores');
+    await fetchHighscores();
 }
 
 // Initialize game when DOM is loaded
