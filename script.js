@@ -6,6 +6,10 @@ const SPEED_INCREASE_INTERVAL = 10000;
 const MIN_ACTIVE_CELLS = 1;
 const MAX_ACTIVE_CELLS = 3;
 
+// Google Sheets configuratie
+const SHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms';
+const RANGE = 'A:D';
+
 // Game state
 let score = 0;
 let timeLeft = GAME_DURATION;
@@ -26,6 +30,7 @@ const finalScoreDisplay = document.querySelector('#final-score span');
 const startButton = document.getElementById('start-game');
 const playAgainButton = document.getElementById('play-again');
 const scoreForm = document.getElementById('score-form');
+const highscoresList = document.getElementById('highscores-list');
 
 // Banned woorden lijst
 const BANNED_NAMES = [
@@ -82,6 +87,66 @@ const BANNED_NAMES = [
     'bot', 'b0t', 'b_t',
     'hack', 'h4ck', 'h_ck', 'hax',
 ];
+
+// Laad highscores
+async function loadHighscores() {
+    try {
+        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=AIzaSyBme5mYvFXL1oM5hjBkxhJkZtc5uXg1ZPI`);
+        const data = await response.json();
+        
+        if (data.values) {
+            // Sorteer op score (kolom D) en neem top 10
+            const scores = data.values
+                .slice(1) // Skip header row
+                .map(row => ({
+                    name: row[1],
+                    score: parseInt(row[3])
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10);
+            
+            // Update de highscores lijst
+            highscoresList.innerHTML = scores
+                .map((score, index) => `
+                    <div class="highscore-item">
+                        <span>${index + 1}. ${score.name}</span>
+                        <span>${score.score}</span>
+                    </div>
+                `)
+                .join('');
+        }
+    } catch (error) {
+        console.error('Fout bij het laden van highscores:', error);
+        highscoresList.innerHTML = '<div class="highscore-item">Scores worden binnenkort bijgewerkt</div>';
+    }
+}
+
+// Sla score op
+async function saveScore(name, email) {
+    try {
+        const timestamp = new Date().toISOString();
+        const values = [[timestamp, name, email, score]];
+        
+        const response = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}:append?valueInputOption=USER_ENTERED&key=AIzaSyBme5mYvFXL1oM5hjBkxhJkZtc5uXg1ZPI`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                values: values
+            })
+        });
+        
+        if (response.ok) {
+            await loadHighscores(); // Herlaad de highscores na het opslaan
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Fout bij het opslaan van score:', error);
+        return false;
+    }
+}
 
 // Initialiseer het grid
 function initGrid() {
@@ -281,14 +346,23 @@ function validateForm() {
 // Event listeners
 startButton.addEventListener('click', startGame);
 playAgainButton.addEventListener('click', startGame);
-scoreForm.addEventListener('submit', (e) => {
+scoreForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (validateForm()) {
-        // Hier zou de Google Sheets API integratie komen
-        alert('Score opgeslagen!');
-        startGame();
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        
+        if (await saveScore(name, email)) {
+            alert('Score opgeslagen!');
+            startGame();
+        } else {
+            alert('Er is een fout opgetreden bij het opslaan van je score. Probeer het later opnieuw.');
+        }
     }
 });
+
+// Laad highscores bij het opstarten
+loadHighscores();
 
 // Initialiseer het spel
 initGrid();
