@@ -249,7 +249,7 @@ async function handleHighscoreSubmit(e) {
     
     try {
         // Google Apps Script Web App URL
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbwxC56XUShIH-RDJgYJYHPconK8pzNY6rRxhjFWXVD0An6xCeMssdjuD4mwqckBoLiXYg/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzKj5Wlew_xYk0jjfGdbgizS2dua48wpSezcCdkpsvHSXircCmaLvS0MkUgj4UlU8Sn_Q/exec';
         
         // Data als URL parameters
         const params = new URLSearchParams({
@@ -302,23 +302,34 @@ async function handleHighscoreSubmit(e) {
 // Haal highscores op
 async function fetchHighscores() {
     try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbyrsLB6pRKo69qVCIJW_pzVjwOGceGIVRVu0m-iXptLPs-DBCWrPcf2nE1Y4UIqhNHLYA/exec?action=getHighscores', {
+        // Google Apps Script Web App URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwxC56XUShIH-RDJgYJYHPconK8pzNY6rRxhjFWXVD0An6xCeMssdjuD4mwqckBoLiXYg/exec';
+        
+        const response = await fetch(`${scriptURL}?action=getHighscores`, {
             method: 'GET',
-            mode: 'no-cors',
             headers: {
                 'Content-Type': 'application/json',
             }
         });
         
-        // Omdat we 'no-cors' gebruiken, kunnen we de response niet direct parsen
-        // We gebruiken een fallback met localStorage
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        const data = await response.json();
+        console.log('Received highscores:', data); // Debug log
+        
+        // Cache de highscores in localStorage
+        localStorage.setItem('cachedHighscores', JSON.stringify(data));
+        
+        return data;
+    } catch (error) {
+        console.error('Error fetching highscores:', error);
+        // Fallback naar gecachte highscores
         const cachedHighscores = localStorage.getItem('cachedHighscores');
         if (cachedHighscores) {
             return JSON.parse(cachedHighscores);
         }
-        return [];
-    } catch (error) {
-        console.error('Error fetching highscores:', error);
         return [];
     }
 }
