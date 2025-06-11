@@ -105,8 +105,12 @@ function gameLoop() {
         activateCell(cell);
     }
     
-    // Schedule next game loop
-    setTimeout(gameLoop, 1500);
+    // Schedule next game loop with dynamic timing based on score
+    const baseInterval = 1500;
+    const speedFactor = Math.max(0.5, 1 - (gameState.score / 1000)); // Gets faster as score increases
+    const nextInterval = baseInterval * speedFactor;
+    
+    setTimeout(gameLoop, nextInterval);
 }
 
 // Activate cell
@@ -188,21 +192,9 @@ function updateDisplay() {
 
 // Update timer
 function updateTimer() {
-    const timerElement = document.getElementById('timer');
-    const currentTime = Date.now();
-    
-    // Check if we're in grace period
-    if (gameState.isInGracePeriod) {
-        const timeSinceLastClick = currentTime - gameState.lastClickTime;
-        if (timeSinceLastClick < gameState.gracePeriod) {
-            return; // Don't end game yet if we're in grace period
-        }
-        gameState.isInGracePeriod = false;
-    }
-    
     if (gameState.timeLeft > 0) {
         gameState.timeLeft--;
-        timerElement.textContent = gameState.timeLeft;
+        elements.time.textContent = gameState.timeLeft;
         
         // Check if this is the last second
         if (gameState.timeLeft === 1) {
